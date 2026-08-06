@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -56,7 +56,8 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -72,6 +73,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.loadReport(this.reportId);
       } else {
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -97,12 +99,18 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   fetchSavedAndHistory() {
     this.apiService.getHistory().subscribe({
-      next: (history) => this.searchHistory = history,
+      next: (history) => {
+        this.searchHistory = history;
+        this.cdr.detectChanges();
+      },
       error: (err) => console.error('Failed to load history:', err)
     });
 
     this.apiService.getReports().subscribe({
-      next: (reports) => this.savedReports = reports,
+      next: (reports) => {
+        this.savedReports = reports;
+        this.cdr.detectChanges();
+      },
       error: (err) => console.error('Failed to load saved reports:', err)
     });
   }
@@ -110,6 +118,8 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
   triggerResearch(name: string) {
     this.loading = true;
     this.error = null;
+    this.cdr.detectChanges();
+
     this.apiService.research(name).subscribe({
       next: (data) => {
         if (data.failedNodes && data.failedNodes['Decision Agent']) {
@@ -118,6 +128,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
             reason: data.failedNodes['Decision Agent'] || 'Critical pipeline execution error.'
           };
           this.loading = false;
+          this.cdr.detectChanges();
           return;
         }
 
@@ -130,6 +141,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
         ];
         this.shouldScrollChat = true;
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error(err);
@@ -138,6 +150,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
           reason: err.error?.error || err.message || 'Workflow crashed during execution.'
         };
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -145,6 +158,8 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
   loadReport(id: string) {
     this.loading = true;
     this.error = null;
+    this.cdr.detectChanges();
+
     this.apiService.getReport(id).subscribe({
       next: (data) => {
         this.report = data;
@@ -156,6 +171,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
         ];
         this.shouldScrollChat = true;
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error(err);
@@ -164,6 +180,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
           reason: err.error?.error || 'Failed to retrieve saved report.'
         };
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -175,6 +192,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
         if (this.report && this.report._id === id) {
           this.report = null;
         }
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Failed to delete report:', err)
     });
@@ -186,14 +204,18 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     this.compareLoading = true;
     this.compareError = null;
+    this.cdr.detectChanges();
+
     this.apiService.research(this.compareCompanyQuery).subscribe({
       next: (data) => {
         this.compareReport = data;
         this.compareLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.compareError = err.error?.error || 'Could not fetch data for the comparison company.';
         this.compareLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -213,6 +235,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.chatMessages.push({ role: 'assistant', content: response.reply });
         this.chatLoading = false;
         this.shouldScrollChat = true;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error(err);
@@ -222,6 +245,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
         });
         this.chatLoading = false;
         this.shouldScrollChat = true;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -294,8 +318,12 @@ Long-Term Outlook: ${this.report.recommendation?.longTermOutlook}
       next: (response) => {
         this.report = response;
         this.saved = true;
-        setTimeout(() => this.saved = false, 2000);
+        setTimeout(() => {
+          this.saved = false;
+          this.cdr.detectChanges();
+        }, 2000);
         this.fetchSavedAndHistory();
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Failed to save report:', err)
     });

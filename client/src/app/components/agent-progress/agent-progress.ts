@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 interface Step {
@@ -39,6 +39,8 @@ export class AgentProgressComponent implements OnInit, OnDestroy {
   private tickIncrement = (this.tickMs / this.stepDurationMs) * 100;
   private finalStepHoldPct = 92;
 
+  constructor(private cdr: ChangeDetectorRef) {}
+
   ngOnInit() {
     this.intervalId = setInterval(() => {
       const isLastStep = this.currentStep === this.steps.length - 1;
@@ -56,6 +58,7 @@ export class AgentProgressComponent implements OnInit, OnDestroy {
         100,
         Math.round(((this.currentStep + this.subProgress / 100) / this.steps.length) * 100)
       );
+      this.cdr.detectChanges();
     }, this.tickMs);
   }
 
