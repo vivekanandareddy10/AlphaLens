@@ -1,0 +1,14 @@
+.scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: #262626 #0a0a0a;
+}
+
+@media print {
+  header, footer, .glass, button, form, aside {
+    display: none !important;
+  }
+  body, main {
+    background: white !important;
+    color: black !important;
+  }
+}
